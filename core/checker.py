@@ -9,19 +9,17 @@ from core.utils import replaceValue, fillHoles
 
 
 def checker(url, params, headers, GET, delay, payload, positions, timeout, encoding):
-    checkString = 'st4r7s' + payload + '3nd'
+    checkString = f'st4r7s{payload}3nd'
     if encoding:
         checkString = encoding(unquote(checkString))
     response = requester(url, replaceValue(
         params, xsschecker, checkString, copy.deepcopy), headers, GET, delay, timeout).text.lower()
-    reflectedPositions = []
-    for match in re.finditer('st4r7s', response):
-        reflectedPositions.append(match.start())
+    reflectedPositions = [
+        match.start() for match in re.finditer('st4r7s', response)
+    ]
     filledPositions = fillHoles(positions, reflectedPositions)
-    #  Itretating over the reflections
-    num = 0
     efficiencies = []
-    for position in filledPositions:
+    for num, position in enumerate(filledPositions):
         allEfficiencies = []
         try:
             reflected = response[reflectedPositions[num]
@@ -41,5 +39,4 @@ def checker(url, params, headers, GET, delay, payload, positions, timeout, encod
             efficiencies.append(max(allEfficiencies))
         else:
             efficiencies.append(0)
-        num += 1
     return list(filter(None, efficiencies))

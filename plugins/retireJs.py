@@ -25,8 +25,7 @@ def scan(data, extractor, definitions, matcher=None):
         if (not is_defined(extractors)):
             continue
         for i in extractors:
-            match = matcher(i, data)
-            if (match):
+            if match := matcher(i, data):
                 detected.append({"version": match,
                                  "component": component,
                                  "detection": extractor})
@@ -36,7 +35,7 @@ def scan(data, extractor, definitions, matcher=None):
 def _simple_match(regex, data):
     regex = deJSON(regex)
     match = re.search(regex, data)
-    return match.group(1) if match else None
+    return match[1] if match else None
 
 
 def _replacement_match(regex, data):
@@ -44,14 +43,10 @@ def _replacement_match(regex, data):
         regex = deJSON(regex)
         group_parts_of_regex = r'^\/(.*[^\\])\/([^\/]+)\/$'
         ar = re.search(group_parts_of_regex, regex)
-        search_for_regex = "(" + ar.group(1) + ")"
+        search_for_regex = f"({ar[1]})"
         match = re.search(search_for_regex, data)
         ver = None
-        if (match):
-            ver = re.sub(ar.group(1), ar.group(2), match.group(0))
-            return ver
-
-        return None
+        return re.sub(ar[1], ar[2], match[0]) if match else None
     except:
         return None
 
@@ -113,7 +108,7 @@ def _is_at_or_above(version1, version2):
     v1 = re.split(r'[.-]', version1)
     v2 = re.split(r'[.-]', version2)
 
-    l = len(v1) if len(v1) > len(v2) else len(v2)
+    l = max(len(v1), len(v2))
     for i in range(l):
         v1_c = _to_comparable(v1[i] if len(v1) > i else None)
         v2_c = _to_comparable(v2[i] if len(v2) > i else None)
@@ -131,10 +126,7 @@ def _is_at_or_above(version1, version2):
 def _to_comparable(n):
     if (not is_defined(n)):
         return 0
-    if (re.search(r'^[0-9]+$', n)):
-        return int(str(n), 10)
-
-    return n
+    return int(str(n), 10) if (re.search(r'^[0-9]+$', n)) else n
 
 
 def _replace_version(jsRepoJsonAsText):
@@ -142,12 +134,7 @@ def _replace_version(jsRepoJsonAsText):
 
 
 def is_vulnerable(results):
-    for r in results:
-        if ('vulnerabilities' in r):
-            # print r
-            return True
-
-    return False
+    return any(('vulnerabilities' in r) for r in results)
 
 
 def scan_uri(uri, definitions):
@@ -180,11 +167,12 @@ def main_scanner(uri, response):
     filecontent = response
     filecontent_scan_result = scan_file_content(filecontent, definitions)
     uri_scan_result.extend(filecontent_scan_result)
-    result = {}
     if uri_scan_result:
-        result['component'] = uri_scan_result[0]['component']
-        result['version'] = uri_scan_result[0]['version']
-        result['vulnerabilities'] = []
+        result = {
+            'component': uri_scan_result[0]['component'],
+            'version': uri_scan_result[0]['version'],
+            'vulnerabilities': [],
+        }
         vulnerabilities = set()
         for i in uri_scan_result:
             k = set()
@@ -204,15 +192,14 @@ def retireJs(url, response):
             updateVar('checkedScripts', script, 'add')
             uri = handle_anchor(url, script)
             response = requester(uri, '', getVar('headers'), True, getVar('delay'), getVar('timeout')).text
-            result = main_scanner(uri, response)
-            if result:
+            if result := main_scanner(uri, response):
                 logger.red_line()
                 logger.good('Vulnerable component: ' + result['component'] + ' v' + result['version'])
-                logger.info('Component location: %s' % uri)
+                logger.info(f'Component location: {uri}')
                 details = result['vulnerabilities']
                 logger.info('Total vulnerabilities: %i' % len(details))
                 for detail in details:
-                    logger.info('%sSummary:%s %s' % (green, end, detail['identifiers']['summary']))
-                    logger.info('Severity: %s' % detail['severity'])
-                    logger.info('CVE: %s' % detail['identifiers']['CVE'][0])
+                    logger.info(f"{green}Summary:{end} {detail['identifiers']['summary']}")
+                    logger.info(f"Severity: {detail['severity']}")
+                    logger.info(f"CVE: {detail['identifiers']['CVE'][0]}")
                 logger.red_line()

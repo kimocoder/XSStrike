@@ -11,10 +11,14 @@ logger = setup_logger(__name__)
 
 def checky(param, paraNames, url, headers, GET, delay, timeout):
     if param not in paraNames:
-        logger.debug('Checking param: {}'.format(param))
+        logger.debug(f'Checking param: {param}')
         response = requester(url, {param: xsschecker},
                              headers, GET, delay, timeout).text
-        if '\'%s\'' % xsschecker in response or '"%s"' % xsschecker in response or ' %s ' % xsschecker in response:
+        if (
+            '\'%s\'' % xsschecker in response
+            or f'"{xsschecker}"' in response
+            or f' {xsschecker} ' in response
+        ):
             paraNames[param] = ''
             logger.good('Valid parameter found: %s%s', green, param)
 
@@ -29,8 +33,9 @@ def arjun(url, GET, headers, delay, timeout):
             foundParam = match[1]
         except UnicodeDecodeError:
             continue
-        logger.good('Heuristics found a potentially valid parameter: %s%s%s. Priortizing it.' % (
-            green, foundParam, end))
+        logger.good(
+            f'Heuristics found a potentially valid parameter: {green}{foundParam}{end}. Priortizing it.'
+        )
         if foundParam not in blindParams:
             blindParams.insert(0, foundParam)
     threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=threadCount)

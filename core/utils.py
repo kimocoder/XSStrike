@@ -9,22 +9,17 @@ from core.config import xsschecker
 
 def converter(data, url=False):
     if 'str' in str(type(data)):
-        if url:
-            dictized = {}
-            parts = data.split('/')[3:]
-            for part in parts:
-                dictized[part] = part
-            return dictized
-        else:
+        if not url:
             return json.loads(data)
+        parts = data.split('/')[3:]
+        return {part: part for part in parts}
+    elif url:
+        url = f'{urlparse(url).scheme}://{urlparse(url).netloc}'
+        for part in list(data.values()):
+            url += f'/{part}'
+        return url
     else:
-        if url:
-            url = urlparse(url).scheme + '://' + urlparse(url).netloc
-            for part in list(data.values()):
-                url += '/' + part
-            return url
-        else:
-            return json.dumps(data)
+        return json.dumps(data)
 
 
 def counter(string):
@@ -103,19 +98,12 @@ def replaceValue(mapping, old, new, strategy=None):
 
 
 def getUrl(url, GET):
-    if GET:
-        return url.split('?')[0]
-    else:
-        return url
+    return url.split('?')[0] if GET else url
 
 
 def extractScripts(response):
-    scripts = []
     matches = re.findall(r'(?s)<script.*?>(.*?)</script>', response.lower())
-    for match in matches:
-        if xsschecker in match:
-            scripts.append(match)
-    return scripts
+    return [match for match in matches if xsschecker in match]
 
 
 def randomUpper(string):
@@ -127,7 +115,7 @@ def flattenParams(currentParam, params, payload):
     for name, value in params.items():
         if name == currentParam:
             value = payload
-        flatted.append(name + '=' + value)
+        flatted.append(f'{name}={value}')
     return '?' + '&'.join(flatted)
 
 
@@ -135,10 +123,7 @@ def genGen(fillings, eFillings, lFillings, eventHandlers, tags, functions, ends,
     vectors = []
     r = randomUpper  # randomUpper randomly converts chars of a string to uppercase
     for tag in tags:
-        if tag == 'd3v' or tag == 'a':
-            bait = xsschecker
-        else:
-            bait = ''
+        bait = xsschecker if tag in ['d3v', 'a'] else ''
         for eventHandler in eventHandlers:
             # if the tag is compatible with the event handler
             if tag in eventHandlers[eventHandler]:
@@ -147,14 +132,12 @@ def genGen(fillings, eFillings, lFillings, eventHandlers, tags, functions, ends,
                         for eFilling in eFillings:
                             for lFilling in lFillings:
                                 for end in ends:
-                                    if tag == 'd3v' or tag == 'a':
-                                        if '>' in ends:
-                                            end = '>'  # we can't use // as > with "a" or "d3v" tag
+                                    if tag in ['d3v', 'a'] and '>' in ends:
+                                        end = '>'  # we can't use // as > with "a" or "d3v" tag
                                     breaker = ''
                                     if badTag:
-                                        breaker = '</' + r(badTag) + '>'
-                                    vector = breaker + '<' + r(tag) + filling + r(
-                                        eventHandler) + eFilling + '=' + eFilling + function + lFilling + end + bait
+                                        breaker = f'</{r(badTag)}>'
+                                    vector = f'{breaker}<{r(tag)}{filling}{r(eventHandler)}{eFilling}={eFilling}{function}{lFilling}{end}{bait}'
                                     vectors.append(vector)
     return vectors
 
@@ -170,8 +153,7 @@ def getParams(url, data, GET):
             params = data
         else:
             try:
-                params = json.loads(data.replace('\'', '"'))
-                return params
+                return json.loads(data.replace('\'', '"'))
             except json.decoder.JSONDecodeError:
                 pass
     else:
@@ -191,13 +173,12 @@ def getParams(url, data, GET):
 
 def writer(obj, path):
     kind = str(type(obj)).split('\'')[0]
-    if kind == 'list' or kind == 'tuple':
+    if kind in ['list', 'tuple']:
         obj = '\n'.join(obj)
     elif kind == 'dict':
         obj = json.dumps(obj, indent=4)
-    savefile = open(path, 'w+')
-    savefile.write(str(obj.encode('utf-8')))
-    savefile.close()
+    with open(path, 'w+') as savefile:
+        savefile.write(str(obj.encode('utf-8')))
 
 
 def reader(path):
@@ -221,16 +202,16 @@ def handle_anchor(parent_url, url):
     if url[:4] == 'http':
         return url
     elif url[:2] == '//':
-        return scheme + ':' + url
+        return f'{scheme}:{url}'
     elif url.startswith('/'):
         host = urlparse(parent_url).netloc
         scheme = urlparse(parent_url).scheme
-        parent_url = scheme + '://' + host
+        parent_url = f'{scheme}://{host}'
         return parent_url + url
     elif parent_url.endswith('/'):
         return parent_url + url
     else:
-        return parent_url + '/' + url
+        return f'{parent_url}/{url}'
 
 
 def deJSON(data):
@@ -250,12 +231,14 @@ def updateVar(name, data, mode=None):
         core.config.globalVariables[name] = data
 
 def isBadContext(position, non_executable_contexts):
-    badContext = ''
-    for each in non_executable_contexts:
-        if each[0] < position < each[1]:
-            badContext = each[2]
-            break
-    return badContext
+    return next(
+        (
+            each[2]
+            for each in non_executable_contexts
+            if each[0] < position < each[1]
+        ),
+        '',
+    )
 
 def equalize(array, number):
     if len(array) < number:
@@ -263,14 +246,8 @@ def equalize(array, number):
 
 def escaped(position, string):
     usable = string[:position][::-1]
-    match = re.search(r'^\\*', usable)
-    if match:
+    if match := re.search(r'^\\*', usable):
         match = match.group()
-        if len(match) == 1:
-            return True
-        elif len(match) % 2 == 0:
-            return False
-        else:
-            return True
+        return len(match) == 1 or len(match) % 2 != 0
     else:
         return False

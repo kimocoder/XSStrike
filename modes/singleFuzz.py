@@ -17,16 +17,15 @@ def singleFuzz(target, paramData, encoding, headers, delay, timeout):
     # If the user hasn't supplied the root url with http(s), we will handle it
     if not target.startswith('http'):
         try:
-            response = requester('https://' + target, {},
-                                 headers, GET, delay, timeout)
-            target = 'https://' + target
+            response = requester(f'https://{target}', {}, headers, GET, delay, timeout)
+            target = f'https://{target}'
         except:
-            target = 'http://' + target
-    logger.debug('Single Fuzz target: {}'.format(target))
+            target = f'http://{target}'
+    logger.debug(f'Single Fuzz target: {target}')
     host = urlparse(target).netloc  # Extracts host out of the url
-    logger.debug('Single fuzz host: {}'.format(host))
+    logger.debug(f'Single fuzz host: {host}')
     url = getUrl(target, GET)
-    logger.debug('Single fuzz url: {}'.format(url))
+    logger.debug(f'Single fuzz url: {url}')
     params = getParams(target, paramData, GET)
     logger.debug_json('Single fuzz params:', params)
     if not params:
@@ -35,12 +34,12 @@ def singleFuzz(target, paramData, encoding, headers, delay, timeout):
     WAF = wafDetector(
         url, {list(params.keys())[0]: xsschecker}, headers, GET, delay, timeout)
     if WAF:
-        logger.error('WAF detected: %s%s%s' % (green, WAF, end))
+        logger.error(f'WAF detected: {green}{WAF}{end}')
     else:
-        logger.good('WAF Status: %sOffline%s' % (green, end))
+        logger.good(f'WAF Status: {green}Offline{end}')
 
     for paramName in params.keys():
-        logger.info('Fuzzing parameter: %s' % paramName)
+        logger.info(f'Fuzzing parameter: {paramName}')
         paramsCopy = copy.deepcopy(params)
         paramsCopy[paramName] = xsschecker
         fuzzer(url, paramsCopy, headers, GET,

@@ -10,8 +10,7 @@ def jsContexter(script):
     #  remove everything that is between {..}, "..." or '...'
     pre = re.sub(r'(?s)\{.*?\}|(?s)\(.*?\)|(?s)".*?"|(?s)\'.*?\'', '', pre)
     breaker = ''
-    num = 0
-    for char in pre:  # iterate over the remaining characters
+    for num, char in enumerate(pre):  # iterate over the remaining characters
         if char == '{':
             breaker += '}'
         elif char == '(':
@@ -30,5 +29,4 @@ def jsContexter(script):
             breaker = stripper(breaker, ')')
         elif breaker == ']':  # we encountered a ] so we will strip off "our }" because this one does the job
             breaker = stripper(breaker, ']')
-        num += 1
     return breaker[::-1]  # invert the breaker string

@@ -47,10 +47,7 @@ logging.Logger.good = _good
 
 
 log_config = {
-    'DEBUG': {
-        'value': logging.DEBUG,
-        'prefix': '{}[*]{}'.format(yellow, end),
-    },
+    'DEBUG': {'value': logging.DEBUG, 'prefix': f'{yellow}[*]{end}'},
     'INFO': {
         'value': logging.INFO,
         'prefix': info,
@@ -71,14 +68,8 @@ log_config = {
         'value': logging.ERROR,
         'prefix': bad,
     },
-    'CRITICAL': {
-        'value': logging.CRITICAL,
-        'prefix': '{}[--]{}'.format(red, end),
-    },
-    'VULN': {
-        'value': VULN_LEVEL_NUM,
-        'prefix': '{}[++]{}'.format(green, red),
-    }
+    'CRITICAL': {'value': logging.CRITICAL, 'prefix': f'{red}[--]{end}'},
+    'VULN': {'value': VULN_LEVEL_NUM, 'prefix': f'{green}[++]{red}'},
 }
 
 
@@ -86,7 +77,7 @@ class CustomFormatter(logging.Formatter):
     def format(self, record):
         msg = super().format(record)
         if record.levelname in log_config.keys():
-            msg = '%s %s %s' % (log_config[record.levelname]['prefix'], msg, end)
+            msg = f"{log_config[record.levelname]['prefix']} {msg} {end}"
         return msg
 
 
@@ -150,9 +141,9 @@ def log_debug_json(self, msg='', data={}):
             try:
                 self.debug('{} {}'.format(msg, json.dumps(data, indent=2)))
             except TypeError:
-                self.debug('{} {}'.format(msg, data))
+                self.debug(f'{msg} {data}')
         else:
-            self.debug('{} {}'.format(msg, data))
+            self.debug(f'{msg} {data}')
 
 
 def setup_logger(name='xsstrike'):

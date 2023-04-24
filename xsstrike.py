@@ -18,7 +18,7 @@ try:
         import os
         print ('%s fuzzywuzzy isn\'t installed, installing now.' % info)
         os.system('pip3 install fuzzywuzzy')
-        print ('%s fuzzywuzzy has been installed, restart XSStrike.' % info)
+        print(f'{info} fuzzywuzzy has been installed, restart XSStrike.')
         quit()
 except ImportError:  # throws error in python2
     print('%s XSStrike isn\'t compatible with python2.\n Use python > 3.4 to run XSStrike.' % bad)
@@ -86,7 +86,7 @@ args = parser.parse_args()
 target = args.target
 path = args.path
 jsonData = args.jsonData
-paramData = args.paramData 
+paramData = args.paramData
 encode = args.encode
 fuzz = args.fuzz
 update = args.update
@@ -134,7 +134,9 @@ else:
 core.config.globalVariables['headers'] = headers
 core.config.globalVariables['checkedScripts'] = set()
 core.config.globalVariables['checkedForms'] = {}
-core.config.globalVariables['definitions'] = json.loads('\n'.join(reader(sys.path[0] + '/db/definitions.json')))
+core.config.globalVariables['definitions'] = json.loads(
+    '\n'.join(reader(f'{sys.path[0]}/db/definitions.json'))
+)
 
 if path:
     paramData = converter(target, target)
@@ -148,10 +150,7 @@ if args_file:
     else:
         payloadList = list(filter(None, reader(args_file)))
 
-seedList = []
-if args_seeds:
-    seedList = list(filter(None, reader(args_seeds)))
-
+seedList = list(filter(None, reader(args_seeds))) if args_seeds else []
 encoding = base64 if encode and encode == 'base64' else False
 
 if not proxy:
@@ -178,20 +177,19 @@ else:
     for target in seedList:
         logger.run('Crawling the target')
         scheme = urlparse(target).scheme
-        logger.debug('Target scheme: {}'.format(scheme))
+        logger.debug(f'Target scheme: {scheme}')
         host = urlparse(target).netloc
-        main_url = scheme + '://' + host
+        main_url = f'{scheme}://{host}'
         crawlingResult = photon(target, headers, level,
                                 threadCount, delay, timeout, skipDOM)
         forms = crawlingResult[0]
         domURLs = list(crawlingResult[1])
         difference = abs(len(domURLs) - len(forms))
         if len(domURLs) > len(forms):
-            for i in range(difference):
+            for _ in range(difference):
                 forms.append(0)
         elif len(forms) > len(domURLs):
-            for i in range(difference):
-                domURLs.append(0)
+            domURLs.extend(0 for _ in range(difference))
         threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=threadCount)
         futures = (threadpool.submit(crawl, scheme, host, main_url, form,
                                      blindXSS, blindPayload, headers, delay, timeout, encoding) for form, domURL in zip(forms, domURLs))
