@@ -38,7 +38,7 @@ def is_alert_present():
 def browser_engine(response):
     global browser
     _write_response_to_file(response)
-    navigate_to('file://' + sys.path[0] + '/test.html')
+    navigate_to(f'file://{sys.path[0]}/test.html')
     os.remove('test.html')
     popUp = False
     actions = webdriver.ActionChains(browser)

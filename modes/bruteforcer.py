@@ -12,18 +12,17 @@ logger = setup_logger(__name__)
 def bruteforcer(target, paramData, payloadList, encoding, headers, delay, timeout):
     GET, POST = (False, True) if paramData else (True, False)
     host = urlparse(target).netloc  # Extracts host out of the url
-    logger.debug('Parsed host to bruteforce: {}'.format(host))
+    logger.debug(f'Parsed host to bruteforce: {host}')
     url = getUrl(target, GET)
-    logger.debug('Parsed url to bruteforce: {}'.format(url))
+    logger.debug(f'Parsed url to bruteforce: {url}')
     params = getParams(target, paramData, GET)
     logger.debug_json('Bruteforcer params:', params)
     if not params:
         logger.error('No parameters to test.')
         quit()
     for paramName in params.keys():
-        progress = 1
         paramsCopy = copy.deepcopy(params)
-        for payload in payloadList:
+        for progress, payload in enumerate(payloadList, start=1):
             logger.run('Bruteforcing %s[%s%s%s]%s: %i/%i\r' %
                        (green, end, paramName, green, end, progress, len(payloadList)))
             if encoding:
@@ -34,6 +33,5 @@ def bruteforcer(target, paramData, payloadList, encoding, headers, delay, timeou
             if encoding:
                 payload = encoding(payload)
             if payload in response:
-                logger.info('%s %s' % (good, payload))
-            progress += 1
+                logger.info(f'{good} {payload}')
     logger.no_format('')

@@ -16,8 +16,7 @@ def updater():
 
     if changes not in latestCommit:  # just a hack to see if a new version is available
         changelog = re.search(r"changes = '''(.*?)'''", latestCommit)
-        changelog = changelog.group(1).split(
-            ';')  # splitting the changes to form a list
+        changelog = changelog[1].split(';')
         logger.good('A new version of XSStrike is available.')
         changes_str = 'Changes:\n'
         for change in changelog:  # prepare changes to print
@@ -26,14 +25,14 @@ def updater():
         currentPath = os.getcwd().split('/')  # if you know it, you know it
         folder = currentPath[-1]  # current directory name
         path = '/'.join(currentPath)  # current directory path
-        choice = input('%s Would you like to update? [Y/n] ' % que).lower()
+        choice = input(f'{que} Would you like to update? [Y/n] ').lower()
 
         if choice != 'n':
             logger.run('Updating XSStrike')
+            os.system(f'git clone --quiet https://github.com/s0md3v/XSStrike {folder}')
             os.system(
-                'git clone --quiet https://github.com/s0md3v/XSStrike %s' % (folder))
-            os.system('cp -r %s/%s/* %s && rm -r %s/%s/ 2>/dev/null' %
-                      (path, folder, path, path, folder))
+                f'cp -r {path}/{folder}/* {path} && rm -r {path}/{folder}/ 2>/dev/null'
+            )
             logger.good('Update successful!')
     else:
         logger.good('XSStrike is up to date!')

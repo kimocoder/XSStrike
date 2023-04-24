@@ -26,7 +26,7 @@ def fuzzer(url, params, headers, GET, delay, timeout, WAF, encoding):
         except:
             logger.error('WAF is dropping suspicious requests.')
             if delay == 0:
-                logger.info('Delay has been increased to %s6%s seconds.' % (green, end))
+                logger.info(f'Delay has been increased to {green}6{end} seconds.')
                 delay += 6
             limit = (delay + 1) * 50
             timer = -1
@@ -44,10 +44,9 @@ def fuzzer(url, params, headers, GET, delay, timeout, WAF, encoding):
         if encoding:
             fuzz = encoding(fuzz)
         if fuzz.lower() in response.text.lower():  # if fuzz string is reflected in the response
-            result = ('%s[passed]  %s' % (green, end))
-        # if the server returned an error (Maybe WAF blocked it)
+            result = f'{green}[passed]  {end}'
         elif str(response.status_code)[:1] != '2':
-            result = ('%s[blocked] %s' % (red, end))
+            result = f'{red}[blocked] {end}'
         else:  # if the fuzz string was not reflected in the response completely
-            result = ('%s[filtered]%s' % (yellow, end))
-        logger.info('%s %s' % (result, fuzz))
+            result = f'{yellow}[filtered]{end}'
+        logger.info(f'{result} {fuzz}')

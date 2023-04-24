@@ -18,7 +18,7 @@ def photon(seedUrl, headers, level, threadCount, delay, timeout, skipDOM):
     storage = set()  # urls that belong to the target i.e. in-scope
     schema = urlparse(seedUrl).scheme  # extract the scheme e.g. http or https
     host = urlparse(seedUrl).netloc  # extract the host e.g. example.com
-    main_url = schema + '://' + host  # join scheme and host to make the root url
+    main_url = f'{schema}://{host}'
     storage.add(seedUrl)  # add the url to storage
     checkedDOMs = []
 
@@ -44,7 +44,7 @@ def photon(seedUrl, headers, level, threadCount, delay, timeout, skipDOM):
             clean_highlighted = ''.join([re.sub(r'^\d+\s+', '', line) for line in highlighted])
             if highlighted and clean_highlighted not in checkedDOMs:
                 checkedDOMs.append(clean_highlighted)
-                logger.good('Potentially vulnerable objects found at %s' % url)
+                logger.good(f'Potentially vulnerable objects found at {url}')
                 logger.red_line(level='good')
                 for line in highlighted:
                     logger.no_format(line, level='good')
@@ -63,7 +63,8 @@ def photon(seedUrl, headers, level, threadCount, delay, timeout, skipDOM):
             elif link[:1] == '/':
                 storage.add(main_url + link)
             else:
-                storage.add(main_url + '/' + link)
+                storage.add(f'{main_url}/{link}')
+
     for x in range(level):
         urls = storage - processed  # urls to crawl = all urls - urls that have been crawled
         # for url in urls:
